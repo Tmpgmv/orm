@@ -1,0 +1,34 @@
+services:
+  database:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: orm
+      POSTGRES_USER: ${DB_USER:?Set DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - course_data:/var/lib/postgresql/data
+  app:
+    build: .
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_URL: jdbc:postgresql://database:5432/orm
+      DB_USER: ${DB_USER:?Set DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:?Set JWT_PRIVATE_KEY}
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:?Set JWT_PUBLIC_KEY}
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
+      EMAIL_API_KEY: ${EMAIL_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:?Set DEMO_PASSWORD}
+    depends_on:
+      database:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:8080"
+volumes:
+  course_data:
